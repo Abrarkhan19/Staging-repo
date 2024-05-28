@@ -1,0 +1,39 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build Docker image
+      run: |
+        docker build -t my-express-app .
+
+    - name: Tag Docker image
+      run: |
+        docker tag my-express-app:latest my-ec2-instance-ip/my-express-app:latest
+
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push my-ec2-instance-ip/my-express-app:latest
+
+    - name: SSH into EC2 and deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_ELASTIC_IP }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        port: ${{ secrets.EC2_SSH_PORT }}
+        script: |
+          docker pull my-ec2-instance-ip/my-express-app:latest
+          docker stop my-express-app || true
+          docker rm my-express-app || true
+          docker run -d -p 3000:3000 --name my-express-app my-ec2-instance-ip/my-express-app:latest
