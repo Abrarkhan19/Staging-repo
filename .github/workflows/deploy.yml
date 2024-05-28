@@ -28,11 +28,15 @@ jobs:
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
 
-    - name: Copy deploy script to EC2
-      run: scp -i ${{ secrets.EC2_PRIVATE_KEY }} deploy.sh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ELASTIC_IP }}:/home/${{ secrets.EC2_USERNAME }}/deploy.sh
-
-    - name: Set execute permissions on deploy script
-      run: ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ELASTIC_IP }} 'chmod +x /home/${{ secrets.EC2_USERNAME }}/deploy.sh'
-
     - name: SSH into EC2 and deploy
-      run: ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ELASTIC_IP }} '/home/${{ secrets.EC2_USERNAME }}/deploy.sh ${{ secrets.DOCKER_USERNAME }} ${{ secrets.PORT }} ${{ secrets.SECRET_KEY }} ${{ secrets.MONGO_URI }} ${{ secrets.SMTP_HOST }} ${{ secrets.SMTP_PORT }} ${{ secrets.SMTP_USER }} ${{ secrets.SMTP_PASS }}'
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_ELASTIC_IP }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        port: ${{ secrets.EC2_SSH_PORT }}
+        script: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
+          docker stop my-express-app || true
+          docker rm my-express-app || true
+          docker run -d -p 80:8086 --name my-express-app ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
