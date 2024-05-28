@@ -28,23 +28,11 @@ jobs:
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
 
-    - name: Upload deploy script to EC2
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.EC2_ELASTIC_IP }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
-        port: ${{ secrets.EC2_SSH_PORT }}
-        source: "deploy.sh"
-        target: "/home/${{ secrets.EC2_USERNAME }}/deploy.sh"
+    - name: Copy deploy script to EC2
+      run: scp -i ${{ secrets.EC2_PRIVATE_KEY }} deploy.sh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ELASTIC_IP }}:/home/${{ secrets.EC2_USERNAME }}/deploy.sh
+
+    - name: Set execute permissions on deploy script
+      run: ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ELASTIC_IP }} 'chmod +x /home/${{ secrets.EC2_USERNAME }}/deploy.sh'
 
     - name: SSH into EC2 and deploy
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.EC2_ELASTIC_IP }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
-        port: ${{ secrets.EC2_SSH_PORT }}
-        script: |
-          chmod 777 /home/${{ secrets.EC2_USERNAME }}/deploy.sh
-          /home/${{ secrets.EC2_USERNAME }}/deploy.sh ${{ secrets.DOCKER_USERNAME }} ${{ secrets.PORT }} ${{ secrets.SECRET_KEY }} ${{ secrets.MONGO_URI }} ${{ secrets.SMTP_HOST }} ${{ secrets.SMTP_PORT }} ${{ secrets.SMTP_USER }} ${{ secrets.SMTP_PASS }}
+      run: ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ELASTIC_IP }} '/home/${{ secrets.EC2_USERNAME }}/deploy.sh ${{ secrets.DOCKER_USERNAME }} ${{ secrets.PORT }} ${{ secrets.SECRET_KEY }} ${{ secrets.MONGO_URI }} ${{ secrets.SMTP_HOST }} ${{ secrets.SMTP_PORT }} ${{ secrets.SMTP_USER }} ${{ secrets.SMTP_PASS }}'
