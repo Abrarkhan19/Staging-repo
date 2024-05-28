@@ -17,13 +17,16 @@ jobs:
       run: |
         docker build -t my-express-app .
 
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
     - name: Tag Docker image
       run: |
-        docker tag my-express-app:latest my-ec2-instance-ip/my-express-app:latest
+        docker tag my-express-app:latest ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
 
     - name: Push Docker image to Docker Hub
       run: |
-        docker push my-ec2-instance-ip/my-express-app:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
 
     - name: SSH into EC2 and deploy
       uses: appleboy/ssh-action@master
@@ -33,7 +36,7 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         port: ${{ secrets.EC2_SSH_PORT }}
         script: |
-          docker pull my-ec2-instance-ip/my-express-app:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
           docker stop my-express-app || true
           docker rm my-express-app || true
-          docker run -d -p 3000:3000 --name my-express-app my-ec2-instance-ip/my-express-app:latest
+          docker run -d -p 3000:3000 --name my-express-app ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
