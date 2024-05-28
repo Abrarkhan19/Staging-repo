@@ -46,5 +46,5 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         port: ${{ secrets.EC2_SSH_PORT }}
         script: |
-          chmod +x /home/${{ secrets.EC2_USERNAME }}/deploy.sh
+          chmod 777 /home/${{ secrets.EC2_USERNAME }}/deploy.sh
           /home/${{ secrets.EC2_USERNAME }}/deploy.sh ${{ secrets.DOCKER_USERNAME }} ${{ secrets.PORT }} ${{ secrets.SECRET_KEY }} ${{ secrets.MONGO_URI }} ${{ secrets.SMTP_HOST }} ${{ secrets.SMTP_PORT }} ${{ secrets.SMTP_USER }} ${{ secrets.SMTP_PASS }}
