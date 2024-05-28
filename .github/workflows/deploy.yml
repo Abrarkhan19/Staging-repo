@@ -39,12 +39,11 @@ jobs:
           docker pull ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
           docker stop my-express-app || true
           docker rm my-express-app || true
-          docker run -d -p 80:8086 --name my-express-app \
+          docker run -d -p 80:8086 --name my-express-app ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest \
             -e PORT=${{ secrets.PORT }} \
             -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
             -e MONGO_URI=${{ secrets.MONGO_URI }} \
             -e SMTP_HOST=${{ secrets.SMTP_HOST }} \
             -e SMTP_PORT=${{ secrets.SMTP_PORT }} \
             -e SMTP_USER=${{ secrets.SMTP_USER }} \
-            -e SMTP_PASS=${{ secrets.SMTP_PASS }} \
-            ${{ secrets.DOCKER_USERNAME }}/my-express-app:latest
+            -e SMTP_PASS=${{ secrets.SMTP_PASS }}
